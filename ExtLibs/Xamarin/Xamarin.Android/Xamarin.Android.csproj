@@ -43,11 +43,11 @@
     <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
     <MandroidI18n>West</MandroidI18n>
     <AndroidUseSharedRuntime>true</AndroidUseSharedRuntime>
-    <EmbedAssembliesIntoApk>false</EmbedAssembliesIntoApk>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     <AndroidUseAapt2>true</AndroidUseAapt2>
     <AndroidCreatePackagePerAbi>true</AndroidCreatePackagePerAbi>
     <AndroidEnableMultiDex>false</AndroidEnableMultiDex>
-    <AndroidHttpClientHandlerType>System.Net.Http.HttpClientHandler</AndroidHttpClientHandlerType>
+    <AndroidHttpClientHandlerType>Xamarin.Android.Net.AndroidClientHandler</AndroidHttpClientHandlerType>
     <AndroidDexTool>d8</AndroidDexTool>
     <AndroidEnableSGenConcurrent>false</AndroidEnableSGenConcurrent>
     <GenerateSerializationAssemblies>Off</GenerateSerializationAssemblies>
@@ -154,6 +154,7 @@
     <Compile Include="Radio.cs" />
     <Compile Include="Resources\Resource.designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SysProp.cs" />
     <Compile Include="UsbDeviceReceiver.cs" />
     <Compile Include="USBDevices.cs" />
   </ItemGroup>
@@ -225,6 +226,18 @@
       <Project>{1378a66c-38e4-46f5-a05f-dc04ef7d4d16}</Project>
       <Name>MissionPlanner.Utilities</Name>
     </ProjectReference>
+    <ProjectReference Include="..\GDALForAndroid\GDALForAndroid.csproj">
+      <Project>{e1d67c23-0cdd-4835-a1e2-4634c0dd4c34}</Project>
+      <Name>GDALForAndroid</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\GDAL\GDALMPAndroid.csproj">
+      <Project>{6a3ba3a7-7d66-4292-90db-05e6a765127a}</Project>
+      <Name>GDALMPAndroid</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\gstreamerAndroid\gstreamerAndroid.csproj">
+      <Project>{e1d67c23-0cdd-4835-a1e2-4634c03d4c34}</Project>
+      <Name>gstreamerAndroid</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Xamarin\Xamarin.csproj">
       <Project>{567c5db1-9d8d-4a82-a89b-7e9357e7f6d8}</Project>
       <Name>Xamarin</Name>
@@ -233,6 +246,9 @@
   <ItemGroup>
     <AndroidResource Include="Resources\xml\device_filter.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\values\strings.xml" />
+  </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <PropertyGroup>
     <PreBuildEvent>
@@ -240,7 +256,7 @@
   </PropertyGroup>
   <ProjectExtensions>
     <VisualStudio>
-      <UserProperties TriggeredFromHotReload="False" />
+      <UserProperties TriggeredFromHotReload="False" XamarinHotReloadDebuggerTimeoutExceptionXamarinAndroidHideInfoBar="True" />
     </VisualStudio>
   </ProjectExtensions>
 </Project>

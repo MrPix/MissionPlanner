@@ -43,7 +43,19 @@ namespace System.Drawing
 
         public Bitmap(Stream stream)
         {
-            nativeSkBitmap = SKBitmap.Decode(stream);
+            if (stream is null)
+            {
+                throw new ArgumentNullException(nameof(stream));
+            }
+            try
+            {
+                nativeSkBitmap = SKBitmap.Decode(stream);
+            }
+            catch (Exception ex)
+            {
+                nativeSkBitmap = new SKBitmap(new SKImageInfo(1, 1));
+                Console.WriteLine(ex);
+            }
         }
 
         public static implicit operator Bitmap(byte[] data)
@@ -66,6 +78,10 @@ namespace System.Drawing
 
         public Bitmap(int clientSizeWidth, int clientSizeHeight, Graphics realDc)
         {
+            if (clientSizeHeight < 1)
+                clientSizeHeight = 1;
+            if (clientSizeWidth < 1)
+                clientSizeWidth = 1;
             nativeSkBitmap = new SKBitmap(new SKImageInfo(clientSizeWidth, clientSizeHeight, SKColorType.Bgra8888));
             nativeSkBitmap.Erase(SKColor.Empty);
             //nativeSkBitmap.SetPixels(realDc._surface.);
@@ -73,12 +89,22 @@ namespace System.Drawing
 
         public Bitmap(string filename)
         {
+            if (filename is null)
+            {
+                throw new ArgumentNullException(nameof(filename));
+            }
+
             using (var f = File.OpenRead(filename))
                 nativeSkBitmap = SKBitmap.Decode(f);
         }
 
         public Bitmap(Image image)
         {
+            if (image is null)
+            {
+                throw new ArgumentNullException(nameof(image));
+            }
+
             nativeSkBitmap = image.nativeSkBitmap.Copy();
         }
 
@@ -90,6 +116,11 @@ namespace System.Drawing
 
         public new static Bitmap FromStream(Stream ms)
         {
+            if (ms is null)
+            {
+                throw new ArgumentNullException(nameof(ms));
+            }
+
             MemoryStream ms2 = new MemoryStream();
             ms.CopyTo(ms2);
             ms2.Position = 0;
@@ -141,6 +172,17 @@ namespace System.Drawing
         public ColorPalette Palette { get; set; } = new ColorPalette(256);
 
         public BitmapData LockBits(Rectangle rectangle, object writeOnly, SKColorType imgPixelFormat)
+        {
+            return new BitmapData()
+            {
+                Scan0 = nativeSkBitmap.GetPixels(),
+                Stride = nativeSkBitmap.RowBytes,
+                Width = nativeSkBitmap.Width,
+                Height = nativeSkBitmap.Height
+            };
+        }
+
+        public BitmapData LockBits(int x,int y, int w, int h, object writeOnly, SKColorType imgPixelFormat)
         {
             return new BitmapData()
             {

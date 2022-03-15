@@ -1,5 +1,5 @@
 name: DotNet Build
-on: push
+on: [push, workflow_dispatch, pull_request]
 
 jobs:
   build:
@@ -10,6 +10,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: true
+          fetch-depth: 10
 
       - name: Build
         shell: pwsh
@@ -24,11 +25,30 @@ jobs:
         run: |
           cd bin\Release\net461
           gci plugins | ForEach-Object {                 if (Test-Path $_.Name -PathType Leaf)                {                    Write-Host "Remove" $_.FullName   ;                 Remove-Item $_.FullName                            } else {                    Write-Host $_.Name                }            }
+
+          copy version.txt ..\..\..\
+          7z a -tzip ..\..\..\MissionPlannerBeta.zip *
+          cd ..
+          .\md5sum.exe net461 > ..\..\checksums.txt
           
       - uses: actions/upload-artifact@v1
         with:
           name: MissionPlannerBeta
           path: bin\Release\net461
+          
+      - uses: "marvinpinto/action-automatic-releases@v1.2.1"
+        if: ${{ github.ref == 'refs/tags/beta' }}
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "betarelease"
+          prerelease: true
+          title: "Beta Build"
+          files: |
+            MissionPlannerBeta.zip
+            checksums.txt
+            version.txt
+            ChangeLog.txt
+
 
   buildDebug:
     name: Build Debug
@@ -38,6 +58,14 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: true
+          fetch-depth: 10
+
+      - name: Cache multiple paths
+        uses: actions/cache@v2
+        with:
+          path: |
+            **/obj
+          key: ${{ runner.os }}-buildDebug
 
       - name: Build
         shell: pwsh

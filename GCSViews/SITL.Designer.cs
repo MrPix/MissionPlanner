@@ -45,9 +45,11 @@ namespace MissionPlanner.GCSViews
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.chk_skipdownload = new System.Windows.Forms.CheckBox();
             this.NUM_heading = new System.Windows.Forms.NumericUpDown();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.chk_skipdownload = new System.Windows.Forms.CheckBox();
+            this.but_swarmrover = new MissionPlanner.Controls.MyButton();
+            this.but_swarmplane = new MissionPlanner.Controls.MyButton();
             this.but_swarmseq = new MissionPlanner.Controls.MyButton();
             this.but_swarmlink = new MissionPlanner.Controls.MyButton();
             this.chk_wipe = new System.Windows.Forms.CheckBox();
@@ -194,6 +196,7 @@ namespace MissionPlanner.GCSViews
             // 
             resources.ApplyResources(this.groupBox3, "groupBox3");
             this.groupBox3.Controls.Add(this.label1);
+            this.groupBox3.Controls.Add(this.chk_skipdownload);
             this.groupBox3.Controls.Add(this.NUM_heading);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.TabStop = false;
@@ -202,6 +205,12 @@ namespace MissionPlanner.GCSViews
             // 
             resources.ApplyResources(this.label1, "label1");
             this.label1.Name = "label1";
+            // 
+            // chk_skipdownload
+            // 
+            resources.ApplyResources(this.chk_skipdownload, "chk_skipdownload");
+            this.chk_skipdownload.Name = "chk_skipdownload";
+            this.chk_skipdownload.UseVisualStyleBackColor = true;
             // 
             // NUM_heading
             // 
@@ -216,7 +225,8 @@ namespace MissionPlanner.GCSViews
             // groupBox4
             // 
             resources.ApplyResources(this.groupBox4, "groupBox4");
-            this.groupBox4.Controls.Add(this.chk_skipdownload);
+            this.groupBox4.Controls.Add(this.but_swarmrover);
+            this.groupBox4.Controls.Add(this.but_swarmplane);
             this.groupBox4.Controls.Add(this.but_swarmseq);
             this.groupBox4.Controls.Add(this.but_swarmlink);
             this.groupBox4.Controls.Add(this.chk_wipe);
@@ -229,11 +239,19 @@ namespace MissionPlanner.GCSViews
             this.groupBox4.Name = "groupBox4";
             this.groupBox4.TabStop = false;
             // 
-            // chk_skipdownload
+            // but_swarmrover
             // 
-            resources.ApplyResources(this.chk_skipdownload, "chk_skipdownload");
-            this.chk_skipdownload.Name = "chk_skipdownload";
-            this.chk_skipdownload.UseVisualStyleBackColor = true;
+            resources.ApplyResources(this.but_swarmrover, "but_swarmrover");
+            this.but_swarmrover.Name = "but_swarmrover";
+            this.but_swarmrover.UseVisualStyleBackColor = true;
+            this.but_swarmrover.Click += new System.EventHandler(this.but_swarmrover_Click);
+            // 
+            // but_swarmplane
+            // 
+            resources.ApplyResources(this.but_swarmplane, "but_swarmplane");
+            this.but_swarmplane.Name = "but_swarmplane";
+            this.but_swarmplane.UseVisualStyleBackColor = true;
+            this.but_swarmplane.Click += new System.EventHandler(this.but_swarmplane_Click);
             // 
             // but_swarmseq
             // 
@@ -384,5 +402,7 @@ namespace MissionPlanner.GCSViews
         private MyButton but_swarmseq;
         private MyButton but_swarmlink;
         private System.Windows.Forms.CheckBox chk_skipdownload;
+        private MyButton but_swarmrover;
+        private MyButton but_swarmplane;
     }
 }

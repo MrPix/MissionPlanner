@@ -826,19 +826,6 @@ namespace MissionPlanner
             flow.newImage += (s, eh) => imagebox.Image = (Image)eh.Image.Clone();
         }
 
-        private void myButton2_Click(object sender, EventArgs e)
-        {
-            var sp = new Sphere();
-
-            sp.Dock = DockStyle.Fill;
-
-            var frm = new Form();
-
-            frm.Controls.Add(sp);
-
-            frm.Show();
-        }
-
         private async void but_gpsinj_Click(object sender, EventArgs e)
         {
             OpenFileDialog ofd = new OpenFileDialog();
@@ -1410,6 +1397,12 @@ namespace MissionPlanner
         private void BUT_CoT_Click(object sender, EventArgs e)
         {
             new SerialOutputCoT().Show();
+        }
+
+        private void but_ManageCMDList_Click(object sender, EventArgs e)
+        {
+            var CMDList = new MavCommandSelection();
+            CMDList.Show();
         }
     }
 }

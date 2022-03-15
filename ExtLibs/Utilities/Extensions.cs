@@ -2,10 +2,12 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -16,6 +18,90 @@ using Newtonsoft.Json;
 
 namespace MissionPlanner.Utilities
 {
+
+    [StructLayout(LayoutKind.Explicit, Size = 8, Pack = 1)]
+    public struct typeunion
+    {
+        [FieldOffset(0)] public bool boolean;
+
+        ///< sizeof(bool) is implementation-defined, so it has to be handled separately
+        [FieldOffset(0)] public Byte u8;
+
+        ///< Also char
+        [FieldOffset(0)] public SByte s8;
+
+        [FieldOffset(0)] public UInt16 u16;
+        [FieldOffset(0)] public Int16 s16;
+        [FieldOffset(0)] public UInt32 u32;
+        [FieldOffset(0)] public Int32 s32;
+
+        ///< Also float, possibly double, possibly long double (depends on implementation)
+        [FieldOffset(0)] public UInt64 u64;
+
+        [FieldOffset(0)] public Int64 s64;
+
+        [FieldOffset(0)] public float f32;
+        [FieldOffset(0)] public double d64;
+
+        public Byte this[int index]
+        {
+            get { return BitConverter.GetBytes(u64)[index]; }
+            set
+            {
+                var temp = BitConverter.GetBytes(u64);
+                temp[index] = value;
+                u64 = BitConverter.ToUInt64(temp, 0);
+            }
+        }
+
+        ///< Also double, possibly float, possibly long double (depends on implementation)
+        public IReadOnlyList<Byte> bytes
+        {
+            get { return BitConverter.GetBytes(u64); }
+            /* set
+            {
+                var temp = value.ToArray();
+                Array.Resize(ref temp, 8);
+                u64 = BitConverter.ToUInt64(temp, 0);
+            }*/
+        }
+
+        public typeunion(bool b1 = false)
+        {
+            boolean = false;
+            u8 = 0;
+            s8 = 0;
+            u16 = 0;
+            u32 = 0;
+            u64 = 0;
+            s8 = 0;
+            s16 = 0;
+            s32 = 0;
+            s64 = 0;
+            f32 = 0;
+            d64 = 0;
+        }
+    }
+
+    public class EqualityComparer<T> : IEqualityComparer<T>
+    {
+        public EqualityComparer(Func<T, T, bool> cmp)
+        {
+            this.cmp = cmp;
+        }
+        public bool Equals(T x, T y)
+        {
+            return cmp(x, y);
+        }
+
+        public int GetHashCode(T obj)
+        {
+            return 0;
+        }
+
+        public Func<T, T, bool> cmp { get; }
+    }
+
     public static class Extensions
     {
         public static Action MessageLoop;
@@ -105,7 +191,89 @@ namespace MissionPlanner.Utilities
         {
             return input.Select(a => (byte) a).ToArray();
         }
-                
+
+        /// <summary>
+        /// from null terminated c-string
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        public static string FromCString(this byte[] input)
+        {
+            string st = Encoding.ASCII.GetString(input);
+
+            int pos = st.IndexOf('\0');
+
+            if (pos != -1)
+            {
+                st = st.Substring(0, pos);
+            }
+
+            return st;
+        }
+
+        /// <summary>
+        /// get upto 64 bits at a time
+        /// </summary>
+        /// <param name="buff"></param>
+        /// <param name="pos"></param>
+        /// <param name="len"></param>
+        /// <returns></returns>
+        public static ulong getbitu(this byte[] buff, uint pos, uint len)
+        {
+            ulong bits = 0;
+            uint i;
+            for (i = pos; i < pos + len; i++)
+                bits = (ulong)((bits << 1) + (byte)((buff[i / 8] >> (int)(7 - i % 8)) & 1u));
+            return bits;
+        }
+
+        public static long getbits(this byte[] buff, uint pos, uint len)
+        {
+            var bits = getbitu(buff, pos, len);
+            if (len <= 0 || 64 <= len || !((bits & (1u << (int)(len - 1))) != 0))
+                return (long)bits;
+            return (long)(bits | (~0ul << (int)len));
+        }
+
+        public static T GetBitOffsetLength<T>(this byte[] input, int start, int offset, int length, bool signed, double resolution = 0)
+        {
+            if (resolution == 0)
+                resolution = 1;
+
+            if (typeof(T) == typeof(string))
+            {
+                return (T)(object)Encoding.ASCII.GetString(BitConverter.GetBytes(input.getbitu((uint)offset, (uint)length)));
+            }
+
+            if (typeof(T) == typeof(int) && signed)
+            {
+                return (T)(object)input.getbits((uint)offset, (uint)length);
+            }
+            if (typeof(T) == typeof(uint) && !signed)
+            {
+                return (T)(object)input.getbitu((uint)offset, (uint)length);
+            }
+
+            if (typeof(T) == typeof(float) && signed)
+            {
+                return (T)(object)new typeunion() { u64 = input.getbitu((uint)offset, (uint)length) }.f32;
+            }
+            if (typeof(T) == typeof(double) && signed)
+            {
+                return (T)(object)new typeunion() { u64 = input.getbitu((uint)offset, (uint)length) }.d64;
+            }
+            if (typeof(T) == typeof(long) && signed)
+            {
+                return (T)(object)new typeunion() { u64 = input.getbitu((uint)offset, (uint)length) }.s64;
+            }
+            if (typeof(T) == typeof(DateTime))
+            {
+                return (T)(object)new typeunion() { u64 = input.getbitu((uint)offset, (uint)length) }.u32;
+            }
+
+            return default(T);
+        }
+
         public static string ToHexString(this byte[] input)
         {
             StringBuilder hex = new StringBuilder(input.Length * 2);
@@ -541,6 +709,35 @@ namespace MissionPlanner.Utilities
             yield return new Tuple<T, T, T>(now, next, InvalidValue);
         }
 
+        public static uint SwapBytes(this uint x)
+        {
+            // swap adjacent 16-bit blocks
+            x = (x >> 16) | (x << 16);
+            // swap adjacent 8-bit blocks
+            return ((x & 0xFF00FF00) >> 8) | ((x & 0x00FF00FF) << 8);
+        }
+
+        public static ushort SwapBytes(this ushort x)
+        {
+            // swap adjacent 8-bit blocks
+            return (ushort)(((x & 0xFF00) >> 8) | ((x & 0x00FF) << 8));
+        }
+
+        public static byte[] HexStringToByteArray(this string hex)
+        {
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
+                             .ToArray();
+        }
+
+        public static string HexStringToSpacedHex(this string hex)
+        {
+            return Enumerable.Range(0, hex.Length)
+                             .Where(x => x % 2 == 0)
+                             .Select(x => hex.Substring(x, 2)).Aggregate((a, b) => a + " " + b);
+        }
+
         public static IEnumerable<Tuple<T, T>> NowNextBy2<T>(this IEnumerable<T> list)
         {
             T now = default(T);
@@ -556,6 +753,28 @@ namespace MissionPlanner.Utilities
                     continue;
                 yield return new Tuple<T, T>(now, next);
             }
+        }
+
+        public static List<PointLatLngAlt> Interpolate(this List<PointLatLngAlt> list)
+        {
+            var ans = new List<PointLatLngAlt>();
+            var count = list.Count();
+
+            for (int a = 0; a < count - 1; a++)
+            {                
+                var now = list[a];
+                var next = list[a + 1];
+
+                ans.Add(now);
+
+                for(float b = 0.1f; b < 1; b += 0.2f)
+                {
+                    ans.Add(now.GetGreatCirclePathPoint(next, b));
+                }
+                ans.Add(next);
+            }
+
+            return ans;
         }
 
         public static object GetPropertyOrField(this object obj, string name)
@@ -705,6 +924,104 @@ namespace MissionPlanner.Utilities
                 read = stream.Read(buffer, 0, buffer.Length);
                 yield return new Span<byte>(buffer, 0, read).ToArray();
             } while (read > 0);
+        }
+
+        public static string ToInvariantString(this object obj)
+        {
+            if (obj != null)
+            {
+                if (!(obj is DateTime))
+                {
+                    if (!(obj is DateTimeOffset))
+                    {
+                        IConvertible c = obj as IConvertible;
+                        if (c == null)
+                        {
+                            IFormattable f = obj as IFormattable;
+                            if (f == null)
+                            {
+                                return obj.ToString();
+                            }
+                            return f.ToString(null, CultureInfo.InvariantCulture);
+                        }
+                        return c.ToString(CultureInfo.InvariantCulture);
+                    }
+                    return ((DateTimeOffset)obj).ToString("o", CultureInfo.InvariantCulture);
+                }
+                return ((DateTime)obj).ToString("o", CultureInfo.InvariantCulture);
+            }
+            return null;
+        }
+
+        public static string ToSizeUnits(this int input)
+        {
+            if (input < 1024)
+                return input + "B";
+
+            if (input < 1024 * 1024)
+            {
+                return (input / 1024) + "KB";
+            }
+
+            return (input / 1024 / 1024) + "MB";
+        }
+
+        public static string ToSizeUnits(this uint input)
+        {
+            if (input < 1024)
+                return input + "B";
+
+            if (input < 1024 * 1024)
+            {
+                return (input / 1024) + "KB";
+            }
+
+            return (input / 1024 / 1024) + "MB";
+        }
+
+        public static string ToSizeUnits(this ulong input)
+        {
+            if (input < 1024)
+                return input + "B";
+
+            if (input < 1024 * 1024)
+            {
+                return (input / 1024) + "KB";
+            }
+
+            return (input / 1024 / 1024) + "MB";
+        }
+
+        public static string ToSizeUnits(this long input)
+        {
+            if (input < 1024)
+                return input + "B";
+
+            if (input < 1024 * 1024)
+            {
+                return (input / 1024) + "KB";
+            }
+
+            return (input / 1024 / 1024) + "MB";
+        }
+
+        public static IEnumerable<(int, int)> SimplifyIntervals(this IEnumerable<(int, int)> intervals)
+        {
+            var ordered = intervals.OrderBy(x => x.Item1);
+            var initialList = new List<(int, int)> { ordered.First() };
+            var simplifiedIntervals = ordered.Aggregate(initialList, (previousList, candidate) =>
+            {
+                var last = previousList.Last();
+                if (candidate.Item1 <= last.Item2)
+                {
+                    var toAdd = (Math.Min(last.Item1, candidate.Item1), Math.Max(last.Item2, candidate.Item2));
+                    return previousList.Take(previousList.Count() - 1).Concat(new[] { toAdd }).ToList();
+                }
+
+                return previousList.Concat(new[] { candidate }).ToList();
+            });
+
+            return simplifiedIntervals;
         }
 
         /*

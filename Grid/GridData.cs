@@ -42,6 +42,10 @@ namespace MissionPlanner.Grid
         // plane settings
         public bool alternateLanes;
         public decimal minlaneseparation;
+        // spiral settings
+        public decimal clockwiseLaps;
+        public decimal laps;
+        public bool matchPerimeter;
 
         // camera config
         public bool trigdist;

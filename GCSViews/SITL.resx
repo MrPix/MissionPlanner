@@ -2058,6 +2058,30 @@
   <data name="&gt;&gt;label1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
+  <data name="chk_skipdownload.Location" type="System.Drawing.Point, System.Drawing">
+    <value>10, 42</value>
+  </data>
+  <data name="chk_skipdownload.Size" type="System.Drawing.Size, System.Drawing">
+    <value>104, 24</value>
+  </data>
+  <data name="chk_skipdownload.TabIndex" type="System.Int32, mscorlib">
+    <value>12</value>
+  </data>
+  <data name="chk_skipdownload.Text" xml:space="preserve">
+    <value>Skip Download</value>
+  </data>
+  <data name="&gt;&gt;chk_skipdownload.Name" xml:space="preserve">
+    <value>chk_skipdownload</value>
+  </data>
+  <data name="&gt;&gt;chk_skipdownload.Type" xml:space="preserve">
+    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
+  <data name="&gt;&gt;chk_skipdownload.Parent" xml:space="preserve">
+    <value>groupBox3</value>
+  </data>
+  <data name="&gt;&gt;chk_skipdownload.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
   <data name="NUM_heading.Location" type="System.Drawing.Point, System.Drawing">
     <value>60, 18</value>
   </data>
@@ -2077,7 +2101,7 @@
     <value>groupBox3</value>
   </data>
   <data name="&gt;&gt;NUM_heading.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="groupBox3.Location" type="System.Drawing.Point, System.Drawing">
     <value>13, 290</value>
@@ -2106,29 +2130,59 @@
   <data name="groupBox4.Anchor" type="System.Windows.Forms.AnchorStyles, System.Windows.Forms">
     <value>Bottom, Left, Right</value>
   </data>
-  <data name="chk_skipdownload.Location" type="System.Drawing.Point, System.Drawing">
-    <value>299, 42</value>
+  <data name="but_swarmrover.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
-  <data name="chk_skipdownload.Size" type="System.Drawing.Size, System.Drawing">
-    <value>104, 24</value>
+  <data name="but_swarmrover.Location" type="System.Drawing.Point, System.Drawing">
+    <value>294, 44</value>
   </data>
-  <data name="chk_skipdownload.TabIndex" type="System.Int32, mscorlib">
-    <value>12</value>
+  <data name="but_swarmrover.Size" type="System.Drawing.Size, System.Drawing">
+    <value>89, 23</value>
   </data>
-  <data name="chk_skipdownload.Text" xml:space="preserve">
-    <value>Skip Download</value>
+  <data name="but_swarmrover.TabIndex" type="System.Int32, mscorlib">
+    <value>14</value>
   </data>
-  <data name="&gt;&gt;chk_skipdownload.Name" xml:space="preserve">
-    <value>chk_skipdownload</value>
+  <data name="but_swarmrover.Text" xml:space="preserve">
+    <value>Rover Swarm - Multilink</value>
   </data>
-  <data name="&gt;&gt;chk_skipdownload.Type" xml:space="preserve">
-    <value>System.Windows.Forms.CheckBox, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  <data name="&gt;&gt;but_swarmrover.Name" xml:space="preserve">
+    <value>but_swarmrover</value>
   </data>
-  <data name="&gt;&gt;chk_skipdownload.Parent" xml:space="preserve">
+  <data name="&gt;&gt;but_swarmrover.Type" xml:space="preserve">
+    <value>MissionPlanner.Controls.MyButton, MissionPlanner.Controls, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</value>
+  </data>
+  <data name="&gt;&gt;but_swarmrover.Parent" xml:space="preserve">
     <value>groupBox4</value>
   </data>
-  <data name="&gt;&gt;chk_skipdownload.ZOrder" xml:space="preserve">
+  <data name="&gt;&gt;but_swarmrover.ZOrder" xml:space="preserve">
     <value>0</value>
+  </data>
+  <data name="but_swarmplane.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
+  </data>
+  <data name="but_swarmplane.Location" type="System.Drawing.Point, System.Drawing">
+    <value>199, 44</value>
+  </data>
+  <data name="but_swarmplane.Size" type="System.Drawing.Size, System.Drawing">
+    <value>89, 23</value>
+  </data>
+  <data name="but_swarmplane.TabIndex" type="System.Int32, mscorlib">
+    <value>13</value>
+  </data>
+  <data name="but_swarmplane.Text" xml:space="preserve">
+    <value>Plane Swarm - Multilink</value>
+  </data>
+  <data name="&gt;&gt;but_swarmplane.Name" xml:space="preserve">
+    <value>but_swarmplane</value>
+  </data>
+  <data name="&gt;&gt;but_swarmplane.Type" xml:space="preserve">
+    <value>MissionPlanner.Controls.MyButton, MissionPlanner.Controls, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</value>
+  </data>
+  <data name="&gt;&gt;but_swarmplane.Parent" xml:space="preserve">
+    <value>groupBox4</value>
+  </data>
+  <data name="&gt;&gt;but_swarmplane.ZOrder" xml:space="preserve">
+    <value>1</value>
   </data>
   <data name="but_swarmseq.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
     <value>NoControl</value>
@@ -2155,7 +2209,7 @@
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;but_swarmseq.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>2</value>
   </data>
   <data name="but_swarmlink.Location" type="System.Drawing.Point, System.Drawing">
     <value>104, 44</value>
@@ -2179,7 +2233,7 @@
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;but_swarmlink.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>3</value>
   </data>
   <data name="chk_wipe.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -2206,7 +2260,7 @@
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;chk_wipe.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>4</value>
   </data>
   <data name="label8.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -2233,7 +2287,7 @@
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;label8.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>5</value>
   </data>
   <data name="txt_cmdline.Location" type="System.Drawing.Point, System.Drawing">
     <value>401, 17</value>
@@ -2254,7 +2308,7 @@
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;txt_cmdline.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>6</value>
   </data>
   <data name="label7.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -2281,7 +2335,7 @@
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;label7.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>7</value>
   </data>
   <data name="cmb_model.Items" xml:space="preserve">
     <value />
@@ -2401,7 +2455,7 @@
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;cmb_model.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>8</value>
   </data>
   <data name="label2.AutoSize" type="System.Boolean, mscorlib">
     <value>True</value>
@@ -2428,7 +2482,7 @@
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;label2.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>9</value>
   </data>
   <data name="num_simspeed.Location" type="System.Drawing.Point, System.Drawing">
     <value>70, 18</value>
@@ -2449,7 +2503,7 @@
     <value>groupBox4</value>
   </data>
   <data name="&gt;&gt;num_simspeed.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>10</value>
   </data>
   <data name="groupBox4.Location" type="System.Drawing.Point, System.Drawing">
     <value>152, 290</value>

@@ -149,10 +149,17 @@ namespace MissionPlanner.GCSViews
                     mand);
             }
 
+            if (isCopter && MainV2.DisplayConfiguration.displayInitialParams)
+            {
+                AddBackstageViewPage(typeof(ConfigInitialParams), rm.GetString("backstageViewPageInitialParams.Text"), isConnected && gotAllParams, mand);
+            }
+
+
             if (MainV2.DisplayConfiguration.displayAccelCalibration)
             {
                 AddBackstageViewPage(typeof(ConfigAccelerometerCalibration), rm.GetString("backstageViewPageaccel.Text"), isConnected && gotAllParams, mand);
             }
+
 
             if (MainV2.DisplayConfiguration.displayCompassConfiguration)
             {
@@ -214,7 +221,7 @@ namespace MissionPlanner.GCSViews
             if (MainV2.DisplayConfiguration.displayCAN)
             {
                 //AddBackstageViewPage(typeof(ConfigHWCAN), "CAN", isConnected, opt);
-                AddBackstageViewPage(typeof(ConfigUAVCAN), "UAVCAN", true, opt);
+                AddBackstageViewPage(typeof(ConfigDroneCAN), "DroneCAN/UAVCAN", true, opt);
             }
             if (MainV2.DisplayConfiguration.displayJoystick)
             {
@@ -273,8 +280,10 @@ namespace MissionPlanner.GCSViews
             {
                 AddBackstageViewPage(typeof(Antenna.TrackerUI), "Antenna Tracker", true, opt);
             }
-
-            AddBackstageViewPage(typeof(ConfigFFT), "FFT Setup", isConnected && gotAllParams, opt);
+            if (MainV2.DisplayConfiguration.displayFFTSetup)
+            {
+                AddBackstageViewPage(typeof(ConfigFFT), "FFT Setup", isConnected && gotAllParams, opt);
+            }
 
             if (MainV2.DisplayConfiguration.isAdvancedMode)
             {

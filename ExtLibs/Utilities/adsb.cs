@@ -60,9 +60,11 @@ namespace MissionPlanner.Utilities
 
             if (thisthread != null)
             {
-                thisthread.Abort();
-                thisthread.Join();
-                thisthread = null;
+                try { 
+                    thisthread.Abort();
+                    thisthread.Join();
+                    thisthread = null;
+                } catch { }
             }
 
             log.Info("adsb stopped");
@@ -789,7 +791,8 @@ namespace MissionPlanner.Utilities
                             int altitude = 0;
                             try
                             {
-                                altitude = (int)double.Parse(strArray[11], CultureInfo.InvariantCulture);// Integer. Mode C Altitude relative to 1013 mb (29.92" Hg). 
+                                // H = HAE
+                                altitude = (int)double.Parse(strArray[11].TrimEnd('H','h'), CultureInfo.InvariantCulture);// Integer. Mode C Altitude relative to 1013 mb (29.92" Hg). 
                             }
                             catch { }
                            
@@ -847,7 +850,7 @@ namespace MissionPlanner.Utilities
                             catch { }
 
                         }
-                        else if (strArray[1] == "1")
+                        else if (strArray[1] == "1" || strArray[1] == "5" || strArray[1] == "6")
                         {
                             String session_id = strArray[2];// String. Database session record number. 
                             String aircraft_id = strArray[3];// String. Database aircraft record number. 

@@ -461,6 +461,11 @@ GRBackendRenderTargetDesc backendRenderTargetDescription = new GRBackendRenderTa
             throw new NotImplementedException();
         }
 
+        public void DrawImage(Image image, float x1, float y1, float w1, float h1, float x2, float y2, float w2, float h2, GraphicsUnit srcUnit)
+        {
+            DrawImage(image, new RectangleF(x1,y1,w1,h1), new RectangleF(x2,y2,w2,h2), srcUnit);
+        }
+
         public void DrawImage(Image image, RectangleF destRect, RectangleF srcRect, GraphicsUnit srcUnit)
         {
             DrawImage(image, destRect.ToRectangle(),srcRect.ToRectangle(),srcUnit);
@@ -526,11 +531,11 @@ GRBackendRenderTargetDesc backendRenderTargetDescription = new GRBackendRenderTa
         {
             if (img == null)
                 return;
-
+            
             _image.DrawBitmap(img.nativeSkBitmap,
                 new SKRect(srcX, srcY, srcX + srcWidth, srcY + srcHeight),
                 new SKRect(rectangle.X, rectangle.Y, rectangle.Right, rectangle.Bottom), _paint);
-
+            
 
         }
 
@@ -571,7 +576,7 @@ GRBackendRenderTargetDesc backendRenderTargetDescription = new GRBackendRenderTa
         {
             _image.Save();
             _image.ClipRect(rect.ToSKRect(), SKClipOperation.Intersect);
-            _image.DrawImage(SKImage.FromBitmap(image.nativeSkBitmap), rect.X, rect.Y, null);
+            _image.DrawBitmap(image.nativeSkBitmap, rect.X, rect.Y, null);
             _image.Restore();
         }
 
@@ -582,7 +587,7 @@ GRBackendRenderTargetDesc backendRenderTargetDescription = new GRBackendRenderTa
 
         public void DrawImageUnscaled(Image image, int x, int y)
         {
-            _image.DrawImage(SKImage.FromBitmap(image.nativeSkBitmap), x, y, null);
+            _image.DrawBitmap(image.nativeSkBitmap, x, y, null);
         }
 
         public void DrawImageUnscaled(Image image, Rectangle rect)
@@ -1258,7 +1263,6 @@ GRBackendRenderTargetDesc backendRenderTargetDescription = new GRBackendRenderTa
         public void ResetTransform()
         {
             _image.ResetMatrix();
-            ResetClip();
         }
 
 

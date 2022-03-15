@@ -297,7 +297,7 @@ namespace MissionPlanner
         }
 
         [GroupText("Position")]
-        [DisplayText("Altitude (dist)")]
+        [DisplayText("Altitude (alt)")]
         public float altasl
         {
             get => _altasl * multiplieralt;
@@ -388,6 +388,27 @@ namespace MissionPlanner
         [DisplayText("GroundCourse2 (deg)")]
         [GroupText("Position")]
         public float groundcourse2 { get; set; }
+
+
+        [DisplayText("Horizontal Accuracy")]
+        [GroupText("Position")]
+        public float gpsh_acc2 { get; private set; }
+
+        [DisplayText("Vertical Accuracy")]
+        [GroupText("Position")]
+        public float gpsv_acc2 { get; private set; }
+
+        [DisplayText("Velocity Accuracy")]
+        [GroupText("Position")]
+        public float gpsvel_acc2 { get; private set; }
+
+        [DisplayText("Heading Accuracy")]
+        [GroupText("Position")]
+        public float gpshdg_acc2 { get; private set; }
+
+        [DisplayText("GPS Yaw (deg)")]
+        [GroupText("Position")]
+        public float gpsyaw2 { get; private set; }
 
         [DisplayText("Sat Count Blend")]
         [GroupText("Position")]
@@ -576,6 +597,24 @@ namespace MissionPlanner
         [DisplayText("Mag3 Field")]
         [GroupText("Sensor")]
         public float magfield3 => (float)Math.Sqrt(Math.Pow(mx3, 2) + Math.Pow(my3, 2) + Math.Pow(mz3, 2));
+
+        // hygrometer1
+        [DisplayText("hygrotemp1 (cdegC)")]
+        [GroupText("Sensor")]
+        public short hygrotemp1 { get; set; }
+
+        [DisplayText("hygrohumi1 (c%)")]
+        [GroupText("Sensor")]
+        public ushort hygrohumi1 { get; set; }
+
+        // hygrometer2
+        [DisplayText("hygrotemp2 (cdegC)")]
+        [GroupText("Sensor")]
+        public short hygrotemp2 { get; set; }
+
+        [DisplayText("hygrohumi2 (c%)")]
+        [GroupText("Sensor")]
+        public ushort hygrohumi2 { get; set; }
 
         //radio
         [GroupText("RadioIn")] public float ch1in { get; set; }
@@ -1487,10 +1526,10 @@ namespace MissionPlanner
             }
         }
 
-        [DisplayText("Sonar Range (meters)")]
+        [DisplayText("Sonar Range (alt)")]
         public float sonarrange
         {
-            get => (float)toDistDisplayUnit(_sonarrange);
+            get => (float)toAltDisplayUnit(_sonarrange);
             set => _sonarrange = value;
         }
 
@@ -1668,6 +1707,8 @@ namespace MissionPlanner
 
         public bool landed { get; set; }
 
+        [GroupText("Saftey")] public bool safteyactive { get; set; }
+
         [GroupText("Terrain")] public bool terrainactive { get; set; }
 
         [GroupText("Terrain")]
@@ -1731,6 +1772,10 @@ namespace MissionPlanner
         [GroupText("PID")] public float piddesired { get; set; }
 
         [GroupText("PID")] public float pidachieved { get; set; }
+
+        [GroupText("PID")] public float pidSRate { get; set; }
+
+        [GroupText("PID")] public float pidPDmod { get; set; }
 
         public uint vibeclip0 { get; set; }
 
@@ -1797,6 +1842,65 @@ namespace MissionPlanner
         [GroupText("EFI")]
         [DisplayText("EFI Fuel Consumed (g)")]
         public float efi_fuelconsumed { get; private set; }
+
+        [GroupText("Transponder Status")]
+        [DisplayText("Transponder 1090ES Tx Enabled")]
+        public bool xpdr_es1090_tx_enabled { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Transponder Mode S Reply Enabled")]
+        public bool xpdr_mode_S_enabled { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Transponder Mode C Reply Enabled")]
+        public bool xpdr_mode_C_enabled { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Transponder Mode A Reply Enabled")]
+        public bool xpdr_mode_A_enabled { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Ident Active")]
+        public bool xpdr_ident_active { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("X-bit Status")]
+        public bool xpdr_x_bit_status { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Interrogated since last")]
+        public bool xpdr_interrogated_since_last { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Airborne")]
+        public bool xpdr_airborne_status { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Transponder Mode A squawk code")]
+        public ushort xpdr_mode_A_squawk_code { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("NIC")]
+        public byte xpdr_nic { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("NACp")]
+        public byte xpdr_nacp { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Board Temperature in C")]
+        public byte xpdr_board_temperature { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Maintainence Required")]
+        public bool xpdr_maint_req { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("ADSB Tx System Failure")]
+        public bool xpdr_adsb_tx_sys_fail { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("GPS Unavailable")]
+        public bool xpdr_gps_unavail { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("GPS No Fix")]
+        public bool xpdr_gps_no_fix { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Ping200X No Status Message Recieved")]
+        public bool xpdr_status_unavail { get; private set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Status Update Pending")]
+        public bool xpdr_status_pending { get; set; }
+        [GroupText("Transponder Status")]
+        [DisplayText("Callsign/Flight ID")]
+        public byte[] xpdr_flight_id { get; set; }
+
 
         public object Clone()
         {
@@ -2451,6 +2555,8 @@ namespace MissionPlanner
 
                             terrainactive = sensors_health.terrain && sensors_enabled.terrain && sensors_present.terrain;
 
+                            safteyactive = !sensors_enabled.motor_control;
+
                             if (errors_count1 > 0 || errors_count2 > 0)
                             {
                                 messageHigh = "InternalError 0x" + (errors_count1 + (errors_count2 << 16)).ToString("X");
@@ -2532,6 +2638,10 @@ namespace MissionPlanner
                             else if (!sensors_health.satcom && sensors_enabled.satcom && sensors_present.satcom)
                             {
                                 messageHigh = Strings.Bad_SatCom;
+                            }
+                            else if (!sensors_health.differential_pressure && sensors_enabled.differential_pressure && sensors_present.differential_pressure)
+                            {
+                                messageHigh = Strings.BadAirspeed;
                             }
                         }
 
@@ -2847,6 +2957,23 @@ namespace MissionPlanner
 
                             groundspeed2 = gps.vel * 1.0e-2f;
                             groundcourse2 = gps.cog * 1.0e-2f;
+
+                            if (mavLinkMessage.ismavlink2)
+                            {
+                                gpsh_acc2 = gps.h_acc / 1000.0f;
+                                gpsv_acc2 = gps.v_acc / 1000.0f;
+                                gpsvel_acc2 = gps.vel_acc / 1000.0f;
+                                gpshdg_acc2 = gps.hdg_acc / 1e5f;
+                                gpsyaw2 = gps.yaw / 100.0f;
+                            }
+                            else
+                            {
+                                gpsh_acc2 = -1;
+                                gpsv_acc2 = -1;
+                                gpsvel_acc2 = -1;
+                                gpshdg_acc2 = -1;
+                                gpsyaw2 = -1;
+                            }
                         }
 
                         break;
@@ -3184,6 +3311,26 @@ namespace MissionPlanner
                             pidaxis = pid.axis;
                             piddesired = pid.desired;
                             pidachieved = pid.achieved;
+                            pidSRate = pid.SRate;
+                            pidPDmod = pid.PDmod;
+                        }
+
+                        break;
+                    case (uint)MAVLink.MAVLINK_MSG_ID.HYGROMETER_SENSOR:
+
+                        {
+                            var hygrometer = mavLinkMessage.ToStructure<MAVLink.mavlink_hygrometer_sensor_t>();
+                            
+                            if (hygrometer.id == 0)
+                            {
+                                hygrotemp1 = hygrometer.temperature;
+                                hygrohumi1 = hygrometer.humidity;
+                            }
+                            else if (hygrometer.id == 1)
+                            {
+                                hygrotemp2 = hygrometer.temperature;
+                                hygrohumi2 = hygrometer.humidity;
+                            }
                         }
 
                         break;
@@ -3242,7 +3389,7 @@ namespace MissionPlanner
                         {
                             var named_float = mavLinkMessage.ToStructure<MAVLink.mavlink_named_value_float_t>();
 
-                            string mav_value_name = Encoding.ASCII.GetString(named_float.name);
+                            string mav_value_name = Encoding.UTF8.GetString(named_float.name);
 
                             int ind = mav_value_name.IndexOf('\0');
                             if (ind != -1)
@@ -3311,6 +3458,35 @@ namespace MissionPlanner
 
                         }
                         break;
+                    case (uint) MAVLink.MAVLINK_MSG_ID.UAVIONIX_ADSB_OUT_STATUS:
+                        {
+                            var status = mavLinkMessage.ToStructure<MAVLink.mavlink_uavionix_adsb_out_status_t>();
+
+                            xpdr_es1090_tx_enabled = (status.state & 128) != 0;
+                            xpdr_mode_S_enabled = (status.state & 64) != 0 ;
+                            xpdr_mode_C_enabled = (status.state & 32) != 0;
+                            xpdr_mode_A_enabled = (status.state & 16) != 0;
+                            xpdr_ident_active = (status.state & 8) != 0;
+                            xpdr_x_bit_status = (status.state & 4) != 0;
+                            xpdr_interrogated_since_last = (status.state & 2) != 0;
+                            xpdr_airborne_status = (status.state & 1) != 0;
+
+                            xpdr_mode_A_squawk_code = status.squawk;
+                            xpdr_nic = (byte)(status.NIC_NACp & 0x0F);
+                            xpdr_nacp = (byte)((status.NIC_NACp >> 4) & 0x0F);
+                            xpdr_board_temperature = status.boardTemp;
+
+                            xpdr_maint_req = (status.fault & 128) != 0;
+                            xpdr_adsb_tx_sys_fail = (status.fault & 64) != 0;
+                            xpdr_gps_unavail = (status.fault & 32) != 0;
+                            xpdr_gps_no_fix = (status.fault & 16) != 0;
+                            xpdr_status_unavail = (status.fault & 8) != 0;
+
+                            xpdr_flight_id = status.flight_id;
+
+                            xpdr_status_pending = true;
+                        }
+                        break;
                 }
             }
         }
@@ -3342,6 +3518,11 @@ namespace MissionPlanner
         public static double toDistDisplayUnit(double input)
         {
             return input * multiplierdist;
+        }
+
+        public static double toAltDisplayUnit(double input)
+        {
+            return input * multiplieralt;
         }
 
         public static double toSpeedDisplayUnit(double input)

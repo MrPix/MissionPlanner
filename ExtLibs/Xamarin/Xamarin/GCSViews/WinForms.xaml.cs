@@ -30,6 +30,8 @@ using Point = System.Drawing.Point;
 using Rectangle = System.Drawing.Rectangle;
 using MissionPlanner.Controls;
 using System.Globalization;
+using log4net;
+using System.Text.RegularExpressions;
 
 namespace Xamarin.GCSViews
 {
@@ -288,8 +290,8 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
                         {
                             try
                             {
-                                var id = (int) typeof(files)
-                                    .GetField(file)
+                                var id = (int) typeof(MissionPlanner.files)
+                                    .GetProperty(file)
                                     .GetValue(null);
 
                                 var filename = pluginsdir + Path.DirectorySeparatorChar + file + ".cs";
@@ -326,8 +328,8 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
                         {
                             try
                             {
-                                var id = typeof(files)
-                                    .GetField(file)
+                                var id = typeof(MissionPlanner.files)
+                                    .GetProperty(file)
                                     .GetValue(null);
 
                                 File.WriteAllText(
@@ -351,6 +353,22 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
         {
             get { return SITL.BundledPath; }
             set { SITL.BundledPath = value; }
+        }
+
+        public static bool Android
+        {
+            get { return MainV2.Android; }
+            set { MainV2.Android = value; }
+        }
+        public static bool IOS
+        {
+            get { return MainV2.IOS; }
+            set { MainV2.IOS = value; }
+        }
+        public static bool OSX
+        {
+            get { return MainV2.OSX; }
+            set { MainV2.OSX = value; }
         }
 
         public static Action InitDevice
@@ -419,13 +437,16 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
 
                 var caretl = caret;
 
-                //if (_focusWindow == handle && caret.Hwnd == _focusWindow)
-                    Device.BeginInvokeOnMainThread(() =>
+                //if (_focusWindow == handle && caret.Hwnd == _focusWindow)                                
+                //Device.BeginInvokeOnMainThread(() =>
+                _inputView.Dispatcher.BeginInvokeOnMainThread(()=>
                     {
                         if(caretptr == handle)
                             return;
 
                         var focusctl = Control.FromHandle(_focusWindow);
+                        if (focusctl == null)
+                            return;
                         var p = focusctl.PointToClient(Form.MousePosition);
 
                         var handlectl = Control.FromHandle(handle);
@@ -447,7 +468,7 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
                             _inputView.TextChanged -= View_TextChanged;
                             _inputView.Completed -= _inputView_Completed;
                             // set                  
-                            
+
                             _inputView.Text = focusctl.Text;
                             // rebind
                             _inputView.Completed += _inputView_Completed;
@@ -455,26 +476,36 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
                             _inputView.Unfocused += _inputView_Unfocused;
                             //show
                             _inputView.IsVisible = true;
-                            _inputView.Focus();                            
+                            _inputView.Focus();
 
-                             caretptr = handle;
+                            caretptr = handle;
                         }                      
                     });
             }
 
             private void _inputView_Completed(object sender, EventArgs e)
             {
+                Console.WriteLine("_inputView_Completed");
                 var focusctl = Control.FromHandle(_focusWindow);
-                focusctl.Text = (sender as Entry)?.Text;
-                 Device.BeginInvokeOnMainThread(() =>
+                var text = (sender as Entry)?.Text;
+                focusctl.BeginInvokeIfRequired(()=>{ 
+                    focusctl.Text = text;
+                });
+                _inputView.Dispatcher.BeginInvokeOnMainThread(() =>
                     {
                 _inputView.IsVisible = false; });
             }
 
             private void _inputView_Unfocused(object sender, FocusEventArgs e)
             {
-                caretptr = IntPtr.Zero;   
-                         Device.BeginInvokeOnMainThread(() =>
+                Console.WriteLine("_inputView_Unfocused");
+                if(Device.RuntimePlatform == Device.macOS)
+                {
+                    // osx only accepts the enter key - which in testing doesnt work
+                    _inputView_Completed(sender, new EventArgs());
+                }
+                caretptr = IntPtr.Zero;                
+                _inputView.Dispatcher.BeginInvokeOnMainThread(() =>
                     {
                 _inputView.IsVisible = false; });
             }
@@ -693,13 +724,16 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
                     // right click handler
                     Device.StartTimer(TimeSpan.FromMilliseconds(1000), () =>
                     {
-                        /*
-                         Console.WriteLine("Mouse rightclick check true={0} 1={1} {2} {3} {4}",                         
-                            touchDictionary.ContainsKey(e.Id),
-                            touchDictionary.Count, 
-                            touchDictionary.ContainsKey(e.Id) ? touchDictionary[e.Id] : null, now, DateTime.Now);
-                        */
-                        if(touchDictionary.ContainsKey(e.Id) && touchDictionary.Count == 1)
+                        // osx has right click, so ignore holding left down
+                        if (Device.RuntimePlatform == Device.macOS)
+                            return false;
+                            /*
+                             Console.WriteLine("Mouse rightclick check true={0} 1={1} {2} {3} {4}",                         
+                                touchDictionary.ContainsKey(e.Id),
+                                touchDictionary.Count, 
+                                touchDictionary.ContainsKey(e.Id) ? touchDictionary[e.Id] : null, now, DateTime.Now);
+                            */
+                            if (touchDictionary.ContainsKey(e.Id) && touchDictionary.Count == 1)
                             if (!touchDictionary[e.Id].hasmoved && touchDictionary[e.Id].DownTime == now)
                             {
                                 touchDictionary[e.Id].wasright = true;
@@ -851,8 +885,8 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
                                 SKRect.Create(x, y, hwnd.width - borders.right - borders.left,
                                     hwnd.height - borders.top - borders.bottom), SKClipOperation.Intersect);
 
-                            Canvas.DrawImage(hwnd.hwndbmp,
-                                new SKPoint(x, y), paint);
+                            Canvas.DrawDrawable(hwnd.hwndbmp,
+                                new SKPoint(x, y));
 
                             wasdrawn = true;
                         }
@@ -872,8 +906,8 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
                     {
                         if (hwnd.DrawNeeded || forcerender)
                         {
-                            Canvas.DrawImage(hwnd.hwndbmp,
-                                new SKPoint(x + 0, y + 0), paint);
+                            Canvas.DrawDrawable(hwnd.hwndbmp,
+                                new SKPoint(x + 0, y + 0));
 
                             wasdrawn = true;
                         }
@@ -1035,7 +1069,9 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
             Test.UsbDevices.USBEvent += DeviceAttached;
         }
 
+#pragma warning disable AsyncFixer03 // Fire-and-forget async-void methods or delegates
         private async void DeviceAttached(object sender, MissionPlanner.ArduPilot.DeviceInfo e)
+#pragma warning restore AsyncFixer03 // Fire-and-forget async-void methods or delegates
         {
             ICommsSerial portUsb = null;
             try
@@ -1115,11 +1151,19 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
 
     public class Speech : ISpeech
     {
+        DateTime lastmsg = DateTime.MinValue;
+        private static readonly ILog log = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
+
         public bool speechEnable { get; set; }
+
+        public Speech()
+        {
+
+        }
 
         public bool IsReady
         {
-            get { return !isBusy; }
+            get { if (lastmsg.AddSeconds(5) < DateTime.Now) return true;  return !isBusy; }
         }
 
         CancellationTokenSource cts;
@@ -1129,22 +1173,47 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
         {
             if (!speechEnable)
                 return;
+
+            if (text == null || String.IsNullOrWhiteSpace(text))
+                return;
+
+            text = Regex.Replace(text, @"\bPreArm\b", "Pre Arm", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\bdist\b", "distance", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\bNAV\b", "Navigation", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b([0-9]+)m\b", "$1 meters", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b([0-9]+)ft\b", "$1 feet", RegexOptions.IgnoreCase);
+            text = Regex.Replace(text, @"\b([0-9]+)\bbaud\b", "$1 baudrate", RegexOptions.IgnoreCase);
+
             cts = new CancellationTokenSource();
+            lastmsg = DateTime.Now;
             isBusy = true;
-            Task.Run(async () =>
-            {
-                try
-                {
-                    await TextToSpeech.SpeakAsync(text, cts.Token).ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                }
-                finally
-                {
-                    isBusy = false;
-                }
-            });
+            log.Info("TTS: say " + text);
+            _ = Task.Run(async () =>
+              {
+                  try
+                  {
+                    var locales = await TextToSpeech.GetLocalesAsync();
+
+                    // Grab the first locale
+                    var locale = locales.FirstOrDefault();
+
+                      var settings = new SpeechOptions()
+                      {
+                          Volume = 1.0f,
+                          Pitch = 1.0f,
+                          Locale = locale
+                      };
+
+                      await TextToSpeech.SpeakAsync(text, settings, cts.Token).ConfigureAwait(false);
+                  }
+                  catch (Exception e)
+                  {
+                  }
+                  finally
+                  {
+                      isBusy = false;
+                  }
+              });
         }
 
         public void SpeakAsyncCancelAll()
@@ -1153,6 +1222,8 @@ MissionPlanner.GCSViews.ConfigurationView.ConfigFirmware.ExtraDeviceInfo += () =
                 return;
 
             cts.Cancel();
+
+            isBusy = false;
         }
     }
 

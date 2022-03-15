@@ -395,6 +395,16 @@
 
    <Compile Include="ExtLibs\Comms\System.IO.Ports\WinSerialStream.cs" />
 
+   <Compile Include="plugins\example3-fencedist.cs" />
+
+   <Compile Include="plugins\example4-herelink.cs" />
+
+   <Compile Include="plugins\example6-mapicondesc.cs" />
+
+   <Compile Include="plugins\example9-hudonoff.cs" />
+
+   <Compile Include="plugins\InitialParamsCalculator.cs" />
+
    <Compile Include="Properties\AssemblyInfo.cs" />
 
    <Compile Include="SikRadio\ISikRadioForm.cs" />
@@ -408,6 +418,7 @@
      <PrivateAssets>all</PrivateAssets>
      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
    </PackageReference>
+   <PackageReference Include="SixLabors.ImageSharp" Version="1.0.3" />
    <PackageReference Include="SkiaSharp.Views.Desktop.Common" Version="1.68.1.1" />
    <PackageReference Include="SkiaSharp.Views.Forms" Version="1.68.1.1" />
    <PackageReference Include="System.Dynamic.Runtime" Version="4.3.0" />
@@ -482,7 +493,6 @@
    <ProjectReference Include="ExtLibs\Strings\MissionPlanner.Strings.csproj" />
    <ProjectReference Include="ExtLibs\System.Drawing.android\System.Drawing.android.csproj" />
    <ProjectReference Include="ExtLibs\Transitions\Transitions.csproj" />
-   <ProjectReference Include="ExtLibs\UAVCAN\UAVCAN.csproj" />
    <ProjectReference Include="ExtLibs\Utilities\MissionPlanner.Utilities.csproj" />
    <ProjectReference Include="ExtLibs\WebAPIs\MissionPlanner.WebAPIs.csproj" />
    <ProjectReference Include="ExtLibs\ZedGraph\ZedGraph.csproj" />
@@ -522,9 +532,6 @@
     <None Update="ParameterMetaDataBackup.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup> 
-  <ItemGroup>
-    <Folder Include="plugins\" />
   </ItemGroup>
 
 </Project>

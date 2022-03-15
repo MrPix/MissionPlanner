@@ -132,7 +132,12 @@ namespace MissionPlanner.Utilities
 
                 var maxcount = (int)Math.Min(chunkleft, count);
 
-                Array.Copy(chunk.Value.ToArray(), positioninchunk, buffer, offset, maxcount);
+                lock (chunk.Value)
+                {
+                    chunk.Value.Position = positioninchunk;
+                    chunk.Value.Read(buffer, offset, maxcount);
+                }
+                //Array.Copy(chunk.Value.ToArray(), positioninchunk, buffer, offset, maxcount);
 
                 bytesgot += maxcount;
                 offset += maxcount;
@@ -145,7 +150,7 @@ namespace MissionPlanner.Utilities
             return bytesgot;
         }
 
-        private bool getAllData(long start, long end)
+        public bool getAllData(long start, long end)
         {
             if (chunksize < 1024 * 2)
                 chunksize = 1024 * 2;
@@ -298,13 +303,19 @@ namespace MissionPlanner.Utilities
             return await Task.Run(() => (content));
         }
 
+        public static event EventHandler<HttpRequestMessage> RequestModification;
+
         public static async Task<bool> getFilefromNetAsync(string url, string saveto, Action<int, string> status = null)
         {
             try
             {
                 log.Info("Get " + url);
 
-                using (var response = await client.GetAsync(url))
+                var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+                RequestModification?.Invoke(url, request);
+
+                using (var response = await client.SendAsync(request).ConfigureAwait(false))
                 {
                     lock (log)
                         log.Info(url + " " +(response).StatusCode.ToString());
@@ -333,7 +344,7 @@ namespace MissionPlanner.Utilities
                     }
 
                     int size = 0;
-                    using (Stream resstream = await response.Content.ReadAsStreamAsync())
+                    using (Stream resstream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
                     using (FileStream fs = new FileStream(saveto + ".new", FileMode.Create))
                     {
                         byte[] buf1 = new byte[1024];
@@ -344,7 +355,7 @@ namespace MissionPlanner.Utilities
 
                         while (resstream.CanRead)
                         {
-                            int len = await resstream.ReadAsync(buf1, 0, 1024);
+                            int len = await resstream.ReadAsync(buf1, 0, 1024).ConfigureAwait(false);
                             if (len == 0)
                                 break;
                             fs.Write(buf1, 0, len);
@@ -356,7 +367,7 @@ namespace MissionPlanner.Utilities
                             if (lastupdate.Second != DateTime.Now.Second)
                             {
                                 lastupdate = DateTime.Now;
-                                Console.WriteLine("{0} bps {1} {2}s {3}% of {4}     \r", size / elapsed, size, elapsed,
+                                log.InfoFormat("{0} bps {1} {2}s {3}% of {4}     \r", size / elapsed, size, elapsed,
                                     percent, contlen);
                                 var timeleft = TimeSpan.FromSeconds(((elapsed / percent) * (100 - percent)));
                                 status?.Invoke((int) percent,
@@ -375,6 +386,9 @@ namespace MissionPlanner.Utilities
 
                     if (File.Exists(saveto))
                     {
+                        // try prevent System.UnauthorizedAccessException: Access to the path
+                        GC.Collect();
+                        File.SetAttributes(saveto, FileAttributes.Normal);
                         File.Delete(saveto);
                     }
 

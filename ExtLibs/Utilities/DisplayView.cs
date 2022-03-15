@@ -96,12 +96,16 @@ namespace MissionPlanner.Utilities
         public Boolean displaySerialPortCMB { get; set; }
         public Boolean standardFlightModesOnly { get; set; }
         public Boolean autoHideMenuForce { get; set; }
+        public Boolean displayInitialParams { get; set; }
         public bool isAdvancedMode { get; set; }
         public bool displayServoOutput { get; set; } = true;
         public bool displayJoystick { get; set; } = true;
         public bool displayOSD { get; set; } = true;
         public bool displayUserParam { get; set; } = true;
         public bool displayPlannerSettings { get; set; } = true;
+        public bool displayFFTSetup { get; set; } = true;
+        public bool displayPreFlightTabEdit { get; set; } = true;
+        public bool displayPlannerLayout { get; set; } = true;
 
         public DisplayView()
         {
@@ -143,6 +147,7 @@ namespace MissionPlanner.Utilities
 
             //initial setup
             displayInstallFirmware = true;
+            displayInitialParams = true;
             displayWizard = true;
             displayFrameType = true;
             displayAccelCalibration = true;

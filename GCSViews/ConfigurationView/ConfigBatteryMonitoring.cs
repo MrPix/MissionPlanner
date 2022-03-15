@@ -148,7 +148,13 @@ namespace MissionPlanner.GCSViews.ConfigurationView
                 }         
                 else if (value == 14)
                 {
+                    // cubeorange
                     CMB_HWVersion.SelectedIndex = 8;
+                }
+                else if (value == 16)
+                {
+                    // durandal
+                    CMB_HWVersion.SelectedIndex = 9;
                 }
             }
             else
@@ -286,7 +292,11 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             }
             catch
             {
-                CustomMessageBox.Show("Set BATT_VOLT_MULT Failed", Strings.ERROR);
+                if (MainV2.comPort.MAV.param.ContainsKey("BATT_MONITOR") &&
+                    (MainV2.comPort.MAV.param["BATT_MONITOR"].Value == 3 ||
+                     MainV2.comPort.MAV.param["BATT_MONITOR"].Value == 4)) {
+                   CustomMessageBox.Show("Set BATT_VOLT_MULT Failed", Strings.ERROR);
+                }
             }
         }
 
@@ -306,7 +316,11 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             }
             catch
             {
-                CustomMessageBox.Show("Set BATT_VOLT_MULT Failed", Strings.ERROR);
+                if (MainV2.comPort.MAV.param.ContainsKey("BATT_MONITOR") &&
+                    (MainV2.comPort.MAV.param["BATT_MONITOR"].Value == 3 ||
+                     MainV2.comPort.MAV.param["BATT_MONITOR"].Value == 4)) {
+                  CustomMessageBox.Show("Set BATT_VOLT_MULT Failed", Strings.ERROR);
+                }
             }
         }
 
@@ -326,7 +340,11 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             }
             catch
             {
-                CustomMessageBox.Show("Set BATT_AMP_PERVOLT Failed", Strings.ERROR);
+                if (MainV2.comPort.MAV.param.ContainsKey("BATT_MONITOR") &&
+                    (MainV2.comPort.MAV.param["BATT_MONITOR"].Value == 3 ||
+                     MainV2.comPort.MAV.param["BATT_MONITOR"].Value == 4)) {
+                  CustomMessageBox.Show("Set BATT_AMP_PERVOLT Failed", Strings.ERROR);
+                }
             }
         }
 
@@ -520,6 +538,12 @@ namespace MissionPlanner.GCSViews.ConfigurationView
                     MainV2.comPort.setParam((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, "BATT_VOLT_PIN", 14);
                     MainV2.comPort.setParam((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, "BATT_CURR_PIN", 15);
                 }
+                else if (selection == 9)
+                {
+                    //durandal
+                    MainV2.comPort.setParam((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, "BATT_VOLT_PIN", 16);
+                    MainV2.comPort.setParam((byte)MainV2.comPort.sysidcurrent, (byte)MainV2.comPort.compidcurrent, "BATT_CURR_PIN", 17);
+                }
             }
             catch
             {
@@ -609,7 +633,11 @@ namespace MissionPlanner.GCSViews.ConfigurationView
             }
             catch
             {
-                CustomMessageBox.Show("Set BATT_AMP_PERVOLT Failed", Strings.ERROR);
+                if (MainV2.comPort.MAV.param.ContainsKey("BATT_MONITOR") &&
+                    (MainV2.comPort.MAV.param["BATT_MONITOR"].Value == 3 ||
+                     MainV2.comPort.MAV.param["BATT_MONITOR"].Value == 4)) {
+                  CustomMessageBox.Show("Set BATT_AMP_PERVOLT Failed", Strings.ERROR);
+                }
             }
         }
     }

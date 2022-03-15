@@ -439,6 +439,12 @@ namespace MissionPlanner
         /// </summary>
         public static bool MONO = false;
 
+        public bool UseCachedParams { get; set; } = false;
+        public static bool Android { get; set; }
+        public static bool IOS { get; set; }
+        public static bool OSX { get; set; }
+
+
         /// <summary>
         /// speech engine enable
         /// </summary>
@@ -506,6 +512,7 @@ namespace MissionPlanner
         /// </summary>
         public static MainV2 instance = null;
 
+        public static bool isHerelink = false;
 
         public static MainSwitcher View;
 
@@ -803,7 +810,7 @@ namespace MissionPlanner
             PopulateSerialportList();
             if (_connectionControl.CMB_serialport.Items.Count > 0)
             {
-                _connectionControl.CMB_baudrate.SelectedIndex = 7;
+                _connectionControl.CMB_baudrate.SelectedIndex = 8;
                 _connectionControl.CMB_serialport.SelectedIndex = 0;
             }
             // ** Done
@@ -1173,6 +1180,8 @@ namespace MissionPlanner
                     }
 
                     instance.MyView.Reload();
+
+                    _connectionControl.UpdateSysIDS();
                 });
             }
             else
@@ -1184,6 +1193,8 @@ namespace MissionPlanner
                 }
 
                 instance.MyView.Reload();
+
+                _connectionControl.UpdateSysIDS();
             }
         }
 #if !NETSTANDARD2_0
@@ -1376,11 +1387,17 @@ namespace MissionPlanner
         private void MenuFlightData_Click(object sender, EventArgs e)
         {
             MyView.ShowScreen("FlightData");
+
+            // save config
+            SaveConfig();
         }
 
         private void MenuFlightPlanner_Click(object sender, EventArgs e)
         {
             MyView.ShowScreen("FlightPlanner");
+
+            // save config
+            SaveConfig();
         }
 
         public void MenuSetup_Click(object sender, EventArgs e)
@@ -1506,7 +1523,7 @@ namespace MissionPlanner
             this.MenuConnect.Image = global::MissionPlanner.Properties.Resources.light_connect_icon;
         }
 
-        public void doConnect(MAVLinkInterface comPort, string portname, string baud, bool getparams = true)
+        public void doConnect(MAVLinkInterface comPort, string portname, string baud, bool getparams = true, bool showui = true)
         {
             bool skipconnectcheck = false;
             log.Info($"We are connecting to {portname} {baud}");
@@ -1514,18 +1531,20 @@ namespace MissionPlanner
             {
                 case "preset":
                     skipconnectcheck = true;
-                    if (comPort.BaseStream is TcpSerial)
-                        _connectionControl.CMB_serialport.Text = "TCP";
-                    if (comPort.BaseStream is UdpSerial)
-                        _connectionControl.CMB_serialport.Text = "UDP";
-                    if (comPort.BaseStream is UdpSerialConnect)
-                        _connectionControl.CMB_serialport.Text = "UDPCl";
-                    if (comPort.BaseStream is SerialPort)
+                    this.BeginInvokeIfRequired(() =>
                     {
-                        _connectionControl.CMB_serialport.Text = comPort.BaseStream.PortName;
-                        _connectionControl.CMB_baudrate.Text = comPort.BaseStream.BaudRate.ToString();
-                    }
-
+                        if (comPort.BaseStream is TcpSerial)
+                            _connectionControl.CMB_serialport.Text = "TCP";
+                        if (comPort.BaseStream is UdpSerial)
+                            _connectionControl.CMB_serialport.Text = "UDP";
+                        if (comPort.BaseStream is UdpSerialConnect)
+                            _connectionControl.CMB_serialport.Text = "UDPCl";
+                        if (comPort.BaseStream is SerialPort)
+                        {
+                            _connectionControl.CMB_serialport.Text = comPort.BaseStream.PortName;
+                            _connectionControl.CMB_baudrate.Text = comPort.BaseStream.BaudRate.ToString();
+                        }
+                    });
                     break;
                 case "TCP":
                     comPort.BaseStream = new TcpSerial();
@@ -1577,10 +1596,13 @@ namespace MissionPlanner
             }
 
             // Tell the connection UI that we are now connected.
-            _connectionControl.IsConnected(true);
+            this.BeginInvokeIfRequired(() =>
+            {
+                _connectionControl.IsConnected(true);
 
-            // Here we want to reset the connection stats counter etc.
-            this.ResetConnectionStats();
+                // Here we want to reset the connection stats counter etc.
+                this.ResetConnectionStats();
+            });
 
             comPort.MAV.cs.ResetInternals();
 
@@ -1670,7 +1692,7 @@ namespace MissionPlanner
                 connecttime = DateTime.Now;
 
                 // do the connect
-                comPort.Open(false, skipconnectcheck);
+                comPort.Open(false, skipconnectcheck, showui);
 
                 if (!comPort.BaseStream.IsOpen)
                 {
@@ -1688,7 +1710,8 @@ namespace MissionPlanner
                     return;
                 }
 
-                if (getparams)
+                //158	MAV_COMP_ID_PERIPHERAL	Generic autopilot peripheral component ID. Meant for devices that do not implement the parameter microservice.
+                if (getparams && comPort.MAV.compid != (byte)MAVLink.MAV_COMPONENT.MAV_COMP_ID_PERIPHERAL)
                 {
                     if (UseCachedParams && File.Exists(comPort.MAV.ParamCachePath) &&
                         new FileInfo(comPort.MAV.ParamCachePath).LastWriteTime > DateTime.Now.AddHours(-1))
@@ -1720,130 +1743,134 @@ namespace MissionPlanner
                     }
                 }
 
-                _connectionControl.UpdateSysIDS();
-
                 // check for newer firmware
-                Task.Run(() =>
-                {
-                    try
+                if (showui)
+                    Task.Run(() =>
                     {
-                        string[] fields1 = comPort.MAV.VersionString.Split(' ');
-
-                        var softwares = APFirmware.GetReleaseNewest(APFirmware.RELEASE_TYPES.OFFICIAL);
-
-                        foreach (var item in softwares)
+                        try
                         {
+                            string[] fields1 = comPort.MAV.VersionString.Split(' ');
+
+                            var softwares = APFirmware.GetReleaseNewest(APFirmware.RELEASE_TYPES.OFFICIAL);
+
+                            foreach (var item in softwares)
+                            {
                             // check primare firmware type. ie arudplane, arducopter
                             if (fields1[0].ToLower().Contains(item.VehicleType.ToLower()))
-                            {
-                                Version ver1 = VersionDetection.GetVersion(comPort.MAV.VersionString);
-                                Version ver2 = item.MavFirmwareVersion;
-
-                                if (ver2 > ver1)
                                 {
-                                    Common.MessageShowAgain(Strings.NewFirmware + "-" + item.VehicleType + " " + ver2,
-                                        Strings.NewFirmwareA + item.VehicleType + " " + ver2 + Strings.Pleaseup +
-                                        "[link;https://discuss.ardupilot.org/tags/stable-release;Release Notes]");
-                                    break;
-                                }
+                                    Version ver1 = VersionDetection.GetVersion(comPort.MAV.VersionString);
+                                    Version ver2 = item.MavFirmwareVersion;
+
+                                    if (ver2 > ver1)
+                                    {
+                                        Common.MessageShowAgain(Strings.NewFirmware + "-" + item.VehicleType + " " + ver2,
+                                            Strings.NewFirmwareA + item.VehicleType + " " + ver2 + Strings.Pleaseup +
+                                            "[link;https://discuss.ardupilot.org/tags/stable-release;Release Notes]");
+                                        break;
+                                    }
 
                                 // check the first hit only
                                 break;
+                                }
                             }
                         }
-                    }
-                    catch (Exception ex)
-                    {
-                        log.Error(ex);
-                    }
-                });
-
-                FlightData.CheckBatteryShow();
-
-                // save the baudrate for this port
-                Settings.Instance[_connectionControl.CMB_serialport.Text + "_BAUD"] =
-                    _connectionControl.CMB_baudrate.Text;
-
-                this.Text = titlebar + " " + comPort.MAV.VersionString;
-
-                // refresh config window if needed
-                if (MyView.current != null)
-                {
-                    if (MyView.current.Name == "HWConfig")
-                        MyView.ShowScreen("HWConfig");
-                    if (MyView.current.Name == "SWConfig")
-                        MyView.ShowScreen("SWConfig");
-                }
-
-                // load wps on connect option.
-                if (Settings.Instance.GetBoolean("loadwpsonconnect") == true)
-                {
-                    // only do it if we are connected.
-                    if (comPort.BaseStream.IsOpen)
-                    {
-                        MenuFlightPlanner_Click(null, null);
-                        FlightPlanner.BUT_read_Click(null, null);
-                    }
-                }
-
-                // get any rallypoints
-                if (MainV2.comPort.MAV.param.ContainsKey("RALLY_TOTAL") &&
-                    int.Parse(MainV2.comPort.MAV.param["RALLY_TOTAL"].ToString()) > 0)
-                {
-                    try
-                    {
-                        FlightPlanner.getRallyPointsToolStripMenuItem_Click(null, null);
-
-                        double maxdist = 0;
-
-                        foreach (var rally in comPort.MAV.rallypoints)
+                        catch (Exception ex)
                         {
-                            foreach (var rally1 in comPort.MAV.rallypoints)
+                            log.Error(ex);
+                        }
+                    });
+
+                this.BeginInvokeIfRequired(() =>
+                {
+                    _connectionControl.UpdateSysIDS();
+
+                    FlightData.CheckBatteryShow();
+
+                    // save the baudrate for this port
+                    Settings.Instance[_connectionControl.CMB_serialport.Text + "_BAUD"] =
+                        _connectionControl.CMB_baudrate.Text;
+
+                    this.Text = titlebar + " " + comPort.MAV.VersionString;
+
+                    // refresh config window if needed
+                    if (MyView.current != null && showui)
+                    {
+                        if (MyView.current.Name == "HWConfig")
+                            MyView.ShowScreen("HWConfig");
+                        if (MyView.current.Name == "SWConfig")
+                            MyView.ShowScreen("SWConfig");
+                    }
+
+                    // load wps on connect option.
+                    if (Settings.Instance.GetBoolean("loadwpsonconnect") == true && showui)
+                    {
+                        // only do it if we are connected.
+                        if (comPort.BaseStream.IsOpen)
+                        {
+                            MenuFlightPlanner_Click(null, null);
+                            FlightPlanner.BUT_read_Click(null, null);
+                        }
+                    }
+
+                    // get any rallypoints
+                    if (MainV2.comPort.MAV.param.ContainsKey("RALLY_TOTAL") &&
+                        int.Parse(MainV2.comPort.MAV.param["RALLY_TOTAL"].ToString()) > 0 && showui)
+                    {
+                        try
+                        {
+                            FlightPlanner.getRallyPointsToolStripMenuItem_Click(null, null);
+
+                            double maxdist = 0;
+
+                            foreach (var rally in comPort.MAV.rallypoints)
                             {
-                                var pnt1 = new PointLatLngAlt(rally.Value.y / 10000000.0f, rally.Value.x / 10000000.0f);
-                                var pnt2 = new PointLatLngAlt(rally1.Value.y / 10000000.0f,
-                                    rally1.Value.x / 10000000.0f);
+                                foreach (var rally1 in comPort.MAV.rallypoints)
+                                {
+                                    var pnt1 = new PointLatLngAlt(rally.Value.y / 10000000.0f, rally.Value.x / 10000000.0f);
+                                    var pnt2 = new PointLatLngAlt(rally1.Value.y / 10000000.0f,
+                                        rally1.Value.x / 10000000.0f);
 
-                                var dist = pnt1.GetDistance(pnt2);
+                                    var dist = pnt1.GetDistance(pnt2);
 
-                                maxdist = Math.Max(maxdist, dist);
+                                    maxdist = Math.Max(maxdist, dist);
+                                }
+                            }
+
+                            if (comPort.MAV.param.ContainsKey("RALLY_LIMIT_KM") &&
+                                (maxdist / 1000.0) > (float)comPort.MAV.param["RALLY_LIMIT_KM"])
+                            {
+                                CustomMessageBox.Show(Strings.Warningrallypointdistance + " " +
+                                                      (maxdist / 1000.0).ToString("0.00") + " > " +
+                                                      (float)comPort.MAV.param["RALLY_LIMIT_KM"]);
                             }
                         }
-
-                        if (comPort.MAV.param.ContainsKey("RALLY_LIMIT_KM") &&
-                            (maxdist / 1000.0) > (float) comPort.MAV.param["RALLY_LIMIT_KM"])
+                        catch (Exception ex)
                         {
-                            CustomMessageBox.Show(Strings.Warningrallypointdistance + " " +
-                                                  (maxdist / 1000.0).ToString("0.00") + " > " +
-                                                  (float) comPort.MAV.param["RALLY_LIMIT_KM"]);
+                            log.Warn(ex);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        log.Warn(ex);
-                    }
-                }
 
-                // get any fences
-                if (MainV2.comPort.MAV.param.ContainsKey("FENCE_TOTAL") &&
-                    int.Parse(MainV2.comPort.MAV.param["FENCE_TOTAL"].ToString()) > 1 &&
-                    MainV2.comPort.MAV.param.ContainsKey("FENCE_ACTION"))
-                {
-                    try
+                    // get any fences
+                    if (MainV2.comPort.MAV.param.ContainsKey("FENCE_TOTAL") &&
+                        int.Parse(MainV2.comPort.MAV.param["FENCE_TOTAL"].ToString()) > 1 &&
+                        MainV2.comPort.MAV.param.ContainsKey("FENCE_ACTION") && showui)
                     {
-                        FlightPlanner.GeoFencedownloadToolStripMenuItem_Click(null, null);
+                        try
+                        {
+                            FlightPlanner.GeoFencedownloadToolStripMenuItem_Click(null, null);
+                        }
+                        catch (Exception ex)
+                        {
+                            log.Warn(ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        log.Warn(ex);
-                    }
-                }
 
-                //Add HUD custom items source
-                HUD.Custom.src = MainV2.comPort.MAV.cs;
+                    //Add HUD custom items source
+                    HUD.Custom.src = MainV2.comPort.MAV.cs;
 
-                // set connected icon
-                this.MenuConnect.Image = displayicons.disconnect;
+                    // set connected icon
+                    this.MenuConnect.Image = displayicons.disconnect;
+                });
             }
             catch (Exception ex)
             {
@@ -1864,11 +1891,13 @@ namespace MissionPlanner
             }
         }
 
-        public bool UseCachedParams { get; set; } = false;
 
         private void MenuConnect_Click(object sender, EventArgs e)
         {
             Connect();
+
+            // save config
+            SaveConfig();
         }
 
         private void Connect()
@@ -3136,12 +3165,6 @@ namespace MissionPlanner
             MyView.AddScreen(new MainSwitcher.Screen("Simulation", Simulation, true));
             MyView.AddScreen(new MainSwitcher.Screen("Help", typeof(GCSViews.Help), false));
 
-            // hide simulation under mono
-            if (Program.MONO)
-            {
-                MenuSimulation.Visible = false;
-            }
-
             try
             {
                 if (Control.ModifierKeys == Keys.Shift)
@@ -3285,6 +3308,12 @@ namespace MissionPlanner
                             MainV2.instance.doConnect(mav, "preset", serial.PortName);
 
                             MainV2.Comports.Add(mav);
+
+                            try
+                            {
+                                Comports = Comports.Distinct().ToList();
+                            }
+                            catch { }
                         }
                         else
                         {
@@ -3305,29 +3334,15 @@ namespace MissionPlanner
                     log.Info("AutoConnect.NewVideoStream " + gststring);
                     GStreamer.gstlaunch = GStreamer.LookForGstreamer();
 
-                    if (!File.Exists(GStreamer.gstlaunch))
+                    if (!GStreamer.gstlaunchexists)
                     {
                         if (CustomMessageBox.Show(
                                 "A video stream has been detected, but gstreamer has not been configured/installed.\nDo you want to install/config it now?",
                                 "GStreamer", System.Windows.Forms.MessageBoxButtons.YesNo) ==
                             (int) System.Windows.Forms.DialogResult.Yes)
                         {
-                            {
-                                ProgressReporterDialogue prd = new ProgressReporterDialogue();
-                                ThemeManager.ApplyThemeTo(prd);
-                                prd.DoWork += sender2 =>
-                                {
-                                    GStreamer.DownloadGStreamer(((i, s) =>
-                                    {
-                                        prd.UpdateProgressAndStatus(i, s);
-                                        if (prd.doWorkArgs.CancelRequested) throw new Exception("User Request");
-                                    }));
-                                };
-                                prd.RunBackgroundOperationAsync();
-
-                                GStreamer.gstlaunch = GStreamer.LookForGstreamer();
-                            }
-                            if (!File.Exists(GStreamer.gstlaunch))
+                            GStreamerUI.DownloadGStreamer();
+                            if (!GStreamer.gstlaunchexists)
                             {
                                 return;
                             }
@@ -3354,6 +3369,11 @@ namespace MissionPlanner
 
             CameraProtocol.OnRTSPDetected += (sender, s) =>
             {
+                if (isHerelink)
+                {
+                    return;
+                }
+
                 if (!videourlseen.Contains(s) && videodetect.Wait(0))
                 {
                     videourlseen.Add(s);
@@ -3484,7 +3504,11 @@ namespace MissionPlanner
 
                         lock (locker)
                         {
-                            if (Comports.Any((a) => { return a.BaseStream.PortName == "UDPCl" + port.ToString(); }))
+                            if (Comports.Any((a) =>
+                                {
+                                    return a.BaseStream.PortName == "UDPCl" + port.ToString() && a.BaseStream.IsOpen;
+                                }
+                            ))
                                 return;
 
                             if (seen.Contains(zeroconfHost.Id))
@@ -3498,6 +3522,9 @@ namespace MissionPlanner
                             {
                                 var mav = new MAVLinkInterface();
 
+                                if(!comPort.BaseStream.IsOpen)
+                                    mav = comPort;
+
                                 var udc = new UdpSerialConnect();
                                 udc.Port = port.ToString();
                                 udc.client = new UdpClient(ip, port);
@@ -3510,6 +3537,12 @@ namespace MissionPlanner
                                     MainV2.instance.doConnect(mav, "preset", port.ToString());
 
                                     MainV2.Comports.Add(mav);
+
+                                    try
+                                    {
+                                        Comports = Comports.Distinct().ToList();
+                                    }
+                                    catch { }
 
                                     MainV2._connectionControl.UpdateSysIDS();
                                 });
@@ -3546,6 +3579,12 @@ namespace MissionPlanner
                             mav.BaseStream = port;
                             MainV2.instance.doConnect(mav, "preset", "0");
                             MainV2.Comports.Add(mav);
+
+                            try
+                            {
+                                Comports = Comports.Distinct().ToList();
+                            }
+                            catch { }
                         });
                 }
                 else
@@ -3556,6 +3595,12 @@ namespace MissionPlanner
                     mav.BaseStream = port;
                     MainV2.instance.doConnect(mav, "preset", "0");
                     MainV2.Comports.Add(mav);
+
+                    try
+                    {
+                        Comports = Comports.Distinct().ToList();
+                    }
+                    catch { }
                 }
             };
 
@@ -3739,7 +3784,7 @@ namespace MissionPlanner
                 {
                     GStreamer.gstlaunch = GStreamer.LookForGstreamer();
 
-                    if (!File.Exists(GStreamer.gstlaunch))
+                    if (!GStreamer.gstlaunchexists)
                     {
                         if (CustomMessageBox.Show(
                                 "A video stream has been detected, but gstreamer has not been configured/installed.\nDo you want to install/config it now?",
@@ -4668,6 +4713,7 @@ namespace MissionPlanner
                     {
                         try
                         {
+                            Console.WriteLine("Process port " + line);
                             MAVLinkInterface mav = new MAVLinkInterface();
 
                             if (tcp.IsMatch(line))
@@ -4713,15 +4759,30 @@ namespace MissionPlanner
                         }
                     }
                 );
-
+                /*
                 foreach (var mav in mavs)
                 {
                     MainV2.instance.BeginInvoke((Action) delegate
                     {
-                        doConnect(mav, "preset", "0", false);
+                        doConnect(mav, "preset", "0", false, false);
                         Comports.Add(mav);
                     });
                 }
+                
+                */
+
+                Parallel.ForEach(mavs, mav => 
+                {
+                    Console.WriteLine("Process connect " + mav);
+                    doConnect(mav, "preset", "0", false, false);
+                    Comports.Add(mav);
+
+                    try
+                    {
+                        Comports = Comports.Distinct().ToList();
+                    }
+                    catch { }
+                });
             }
         }
 
